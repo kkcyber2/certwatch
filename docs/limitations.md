@@ -52,7 +52,7 @@ This is a network observer, not a scanner-in-depth. It cannot see:
   reported as "not accepted". Two machines can legitimately produce different
   weak-cipher findings for the same server.
 - The live-certificate tests skip when there is no network. A green run on an
-  offline runner covers fewer than 61 tests.
+  offline runner covers 65 of the 69 tests.
 - Certificate expiry is computed against the local clock. A host with a skewed
   clock will draw wrong conclusions about every certificate it checks.
 
