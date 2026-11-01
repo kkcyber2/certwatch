@@ -51,3 +51,12 @@ and key size.
 
 Scope is narrow: **it parses; it does not verify signatures or build chains.**
 That is what `ssl` does correctly, in one dedicated probe.
+
+## Verification
+
+61 tests pass on Python 3.9, 3.11 and 3.12. Threshold logic runs offline
+against a fixed clock; a live-endpoint CI step separately proves the parser
+yields a real issuer and expiry date.
+
+Full record, including an explicit list of what is not covered:
+[docs/verification.md](docs/verification.md).
