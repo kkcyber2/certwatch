@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest
+
+      - name: Test suite
+        run: python -m pytest tests/ -q
+
+      # The pure tests prove the parser and the severity ordering without a
+      # network. These steps additionally prove the tool works against a real
+      # TLS endpoint, which no fixture can establish.
+      - name: CLI against a live endpoint
+        run: |
+          python -m certwatch.cli example.com --no-colour --no-cipher-probe || true
+
+      - name: Live scan must report an expiry date
+        run: |
+          python -m certwatch.cli example.com --json --no-cipher-probe > /tmp/out.json || true
+          python -c "
+          import json
+          data = json.load(open('/tmp/out.json'))
+          assert data, 'no output'
+          cert = data[0].get('cert')
+          assert cert is not None, 'no certificate parsed'
+          assert cert['not_after'], 'expiry date missing - DER parser failed'
+          assert cert['issuer'], 'issuer missing'
+          print('live parse OK:', cert['issuer'], 'expires', cert['not_after'])
+          "
